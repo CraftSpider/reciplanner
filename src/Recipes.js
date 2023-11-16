@@ -73,6 +73,8 @@ function RecipeDetails({ recipe }) {
 function RecipeForm({ recipe, onSubmit, adding }) {
   let name = recipe?.name;
 
+  // TODO: Ingredient list with button to see and select ingredients, and add quantity used
+
   return <Form key={name} action="" onSubmit={onSubmit}>
     <Form.Group controlId="recipe-name">
       <Form.Label>Name</Form.Label>

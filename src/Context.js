@@ -30,19 +30,24 @@ export class Ingredient {
 export class IngredientStore {
   [immerable] = true;
 
-  /** @type Array<Ingredient> */
-  #list;
+  /**
+   * @type Array<Ingredient>
+   * @private
+   *
+   * I'd like this to be # private, but if I do that Immer falls over
+   */
+  list;
 
   constructor() {
-    this.#list = [new Ingredient("Tomato"), new Ingredient("Potato"), new Ingredient("Chicken")];
+    this.list = [new Ingredient("Tomato"), new Ingredient("Potato"), new Ingredient("Chicken")];
   }
 
   toString() {
-    return "IngredientStore { list: " + this.#list + " }"
+    return "IngredientStore { list: " + this.list + " }"
   }
 
   all() {
-    return this.#list;
+    return this.list;
   }
 
   /**
@@ -50,12 +55,12 @@ export class IngredientStore {
    * @returns {boolean}
    */
   addIngredient(ingredient) {
-    for (const existing of this.#list) {
+    for (const existing of this.list) {
       if (existing.name === ingredient.name) {
         return false;
       }
     }
-    this.#list.push(ingredient);
+    this.list.push(ingredient);
     return true;
   }
 
@@ -64,13 +69,13 @@ export class IngredientStore {
    */
   removeIngredient(ingredient) {
     let idx = 0;
-    for (const existing of this.#list) {
+    for (const existing of this.list) {
       if (existing.name === ingredient.name) {
         break;
       }
       idx += 1;
     }
-    this.#list.splice(idx, 1)
+    this.list.splice(idx, 1)
   }
 
   /**
@@ -78,7 +83,7 @@ export class IngredientStore {
    * @returns {Ingredient|null}
    */
   getByName(name) {
-    for(const ingredient of this.#list) {
+    for(const ingredient of this.list) {
       if (ingredient.name === name) {
         return ingredient;
       }
@@ -126,15 +131,18 @@ export class Recipe {
 export class RecipeStore {
   [immerable] = true;
 
-  /** @type Array<Recipe> */
-  #list;
+  /**
+   * @type Array<Recipe>
+   * @private
+   */
+  list;
 
   constructor() {
-    this.#list = [];
+    this.list = [];
   }
 
   all() {
-    return this.#list;
+    return this.list;
   }
 
   /**
@@ -142,12 +150,12 @@ export class RecipeStore {
    * @returns {boolean}
    */
   addRecipe(recipe) {
-    for (const existing of this.#list) {
+    for (const existing of this.list) {
       if (existing.name === recipe.name) {
         return false;
       }
     }
-    this.#list.push(recipe);
+    this.list.push(recipe);
     return true;
   }
 
@@ -156,13 +164,13 @@ export class RecipeStore {
    */
   removeRecipe(recipe) {
     let idx = 0;
-    for (const existing of this.#list) {
+    for (const existing of this.list) {
       if (existing.name === recipe.name) {
         break;
       }
       idx += 1;
     }
-    this.#list.splice(idx, 1)
+    this.list.splice(idx, 1)
   }
 
   /**
@@ -170,7 +178,7 @@ export class RecipeStore {
    * @returns {Recipe|null}
    */
   getByName(name) {
-    for(const recipe of this.#list) {
+    for(const recipe of this.list) {
       if (recipe.name === name) {
         return recipe;
       }
@@ -188,9 +196,10 @@ export class ImmerCtx {
 
   /**
    * @param {T} inner
+   * @param {(new_val: ImmerCtx<T>) => void} updater
    */
-  constructor(inner) {
-    this.updater = null;
+  constructor(inner, updater) {
+    this.updater = updater;
     this.#inner = inner;
   }
 
@@ -198,7 +207,8 @@ export class ImmerCtx {
    * @param {(draft: T) => void} f
    */
   update(f) {
-    this.updater(new ImmerCtx(produce(this.#inner, f)));
+    let next = produce(this.#inner, f);
+    this.updater(new ImmerCtx(next, this.updater));
   }
 
   /**
